@@ -13,6 +13,7 @@ from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document 
 import firebase_admin
+from firebase_admin import credentials, firestore
 
 
 
