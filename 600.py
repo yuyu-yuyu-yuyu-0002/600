@@ -22,18 +22,7 @@ from firebase_admin import credentials, firestore
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
-firebase_key_json = os.environ.get("FIREBASE_CREDENTIALS")
-if not firebase_key_json:
-    raise ValueError("❌ 環境變數 'FIREBASE_CREDENTIALS' 沒有設定")
 
-cred_dict = json.loads(firebase_key_json)
-
-
-if not firebase_admin._apps:
-    cred = credentials.Certificate(cred_dict)  # 確保此檔案在你的專案資料夾中
-    firebase_admin.initialize_app(cred)
-    
-db = firestore.client()
 
 
 
@@ -57,6 +46,19 @@ vectorstore = None
 def load_firebase_documents():
     print("🔐 從 Firebase Firestore 載入 dada 資料...")
 
+    firebase_key_json = os.environ.get("FIREBASE_CREDENTIALS")
+    if not firebase_key_json:
+        raise ValueError("❌ 環境變數 'FIREBASE_CREDENTIALS' 沒有設定")
+
+    cred_dict = json.loads(firebase_key_json)
+
+
+    if not firebase_admin._apps:
+        cred = credentials.Certificate(cred_dict)  # 確保此檔案在你的專案資料夾中
+        firebase_admin.initialize_app(cred)
+    
+    db = firestore.client()
+    
     doc_ref = db.collection("dada").document("dada")
     doc = doc_ref.get()
 
@@ -148,21 +150,6 @@ def build_vectorstore():
         print("✅ 向量資料庫建立完成")
 
 
-@app.route("/", methods=["GET"])
-def index():
-    global vectorstore
-    if vectorstore is None:
-        # 再次嘗試初始化（避免 before_first_request 失敗）
-        try:
-            build_vectorstore()
-        except FileNotFoundError as e:
-            return str(e), 404
-        except ValueError as e:
-            return str(e), 400
-        except Exception as e:
-            return f"❌ 初始化向量庫失敗：{e}", 500
-
-    return "✅ 向量資料庫已建立完成並可使用", 200
 
 
 
