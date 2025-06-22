@@ -12,8 +12,6 @@ from langchain.vectorstores import FAISS
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document 
-import firebase_admin
-from firebase_admin import credentials, firestore
 
 
 
@@ -21,10 +19,6 @@ from firebase_admin import credentials, firestore
 
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
-
-
-
-
 
 
 # GPT API Key 設定（openai 0.28.1 寫法）
@@ -42,54 +36,21 @@ handler = WebhookHandler(CHANNEL_SECRET)
 
 vectorstore = None
 
-
-def load_firebase_documents():
-    print("🔐 從 Firebase Firestore 載入 dada 資料...")
-
-    firebase_key_json = os.environ.get("FIREBASE_CREDENTIALS")
-    if not firebase_key_json:
-        raise ValueError("❌ 環境變數 'FIREBASE_CREDENTIALS' 沒有設定")
-
-    cred_dict = json.loads(firebase_key_json)
-
-
-    if not firebase_admin._apps:
-        cred = credentials.Certificate(cred_dict)  # 確保此檔案在你的專案資料夾中
-        firebase_admin.initialize_app(cred)
-    
-    db = firestore.client()
-    
-    doc_ref = db.collection("dada").document("dada")
-    doc = doc_ref.get()
-
-    if not doc.exists:
-        raise Exception("❌ 文件 'dada/dada' 不存在")
-
-    data = doc.to_dict()
-    content = data.get("dada")
-
-    if not content:
-        raise ValueError("❌ 'dada' 欄位為空")
-
-    print(f"📄 成功讀取，字元數：{len(content)}")
-    print(f"📄 前100字：\n{content[:100]}")
-
-    # 切割文字
-    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-    chunks = splitter.split_text(content)
-
-    # 包裝成 Document
-    return [Document(page_content=chunk) for chunk in chunks]
-
-    
 def load_embedding_model():
     return HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-MiniLM-L3-v2")
 
-
+# === STEP 2: 讀取 TXT 檔 並切割 ===
+def load_txt_documents(filepath: str):
+    with open(filepath, "r", encoding="utf-8") as f:
+        text = f.read()
+    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+    chunks = splitter.split_text(text)
+    return [Document(page_content=chunk) for chunk in chunks]
 
 # === STEP 4: 建立向量資料庫 ===
 def create_vectorstore(chunks, embedding_model):
     return FAISS.from_documents(chunks, embedding_model)
+
 
 # === STEP 5: 問答階段：查詢 FAISS 並餵給 GPT ===
 def ask_gpt_with_context(query: str, vectorstore: FAISS) -> str:
@@ -139,16 +100,13 @@ def callback():
 @app.before_first_request
 def build_vectorstore():
     global vectorstore
-   
-    if vectorstore is None:  # 確保只建一次     
+    if vectorstore is None:  # 確保只建一次
         print("🔍 載入資料與建立向量庫...")
         embeddings = load_embedding_model()
-        print("🔍 讀取 firebase 並切割...")
-        docs = load_firebase_documents()
+        print("🔍 讀取 TXT 檔 並切割...")
+        docs = load_txt_documents("text.txt")
         print("🔍 建立向量資料庫...") 
         vectorstore = FAISS.from_documents(docs, embeddings)
-        print("✅ 向量資料庫建立完成")
-
 
 
 
