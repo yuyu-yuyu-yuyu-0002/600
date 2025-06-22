@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: 600
+    env: python
+    runtime: python-3.10.12
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -b 0.0.0.0:$PORT 600:app
+    region: frankfurt
+    plan: free
+    branch: main
+    repo: https://github.com/yuyu-yuyu-yuyu-0002/600
+    buildFilter:
+      paths:
+        - requirements.txt
+        - 600.py
+        - runtime.txt
