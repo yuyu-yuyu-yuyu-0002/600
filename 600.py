@@ -45,19 +45,24 @@ def download_txt_from_mega(filename: str):
 
     for file_id, file_info in files.items():
         if file_info.get("a", {}).get("n") == filename:
-            print(f"📦 找到檔案 {filename}，準備下載內容...")
-            file = m.download_url(m.get_download_link(file=(file_id, file_info)))
-            content = file.decode("utf-8")
+            print(f"📦 找到檔案 {filename}，準備下載中...")
+            m.download((file_id, file_info), dest_path=".", dest_filename=filename)
 
-            with open(filename, "w", encoding="utf-8") as f:
-                f.write(content)
-            
-            print(f"✅ 已成功寫入 {filename}")
-            print(f"📄 檔案大小：{len(content)} 字元")
-            print(f"📄 前100字內容：\n{content[:100]}")
+            # 確認檔案是否成功寫入
+            if not os.path.exists(filename):
+                raise FileNotFoundError(f"❌ 檔案 {filename} 下載後找不到")
+            if os.stat(filename).st_size == 0:
+                raise ValueError(f"❌ 檔案 {filename} 下載後為空")
+
+            # 顯示預覽內容
+            with open(filename, "r", encoding="utf-8") as f:
+                content = f.read()
+                print(f"✅ 成功下載：{filename}")
+                print(f"📄 檔案大小：{len(content)} 字元")
+                print(f"📄 前100字內容：\n{content[:100]}")
             return
 
-    raise FileNotFoundError(f"❌ 在 MEGA 找不到檔案：{filename}") 
+    raise FileNotFoundError(f"❌ 在 MEGA 找不到檔案：{filename}")
 
     
 def load_embedding_model():
