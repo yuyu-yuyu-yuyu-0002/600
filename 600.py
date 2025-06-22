@@ -119,6 +119,20 @@ def callback():
 @app.before_first_request
 def build_vectorstore():
     global vectorstore
+
+    try:
+        with open("text.txt", "r", encoding="utf-8") as f:
+            text = f.read()
+            if not text.strip():
+                return "⚠️ text.txt 是空的，請填入內容再重新部署", 400
+        # 正常建構向量資料庫的邏輯
+        return "✅ 成功建立向量資料庫", 200
+    except FileNotFoundError:
+        return "❌ 找不到 text.txt 檔案", 404
+    except Exception as e:
+        print("❌ 例外發生：", e)
+        return f"伺服器錯誤：{e}", 500
+    
     if vectorstore is None:  # 確保只建一次
         
         print("🔐 登入 MEGA 並下載 .txt 檔案...")
