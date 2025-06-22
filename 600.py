@@ -48,6 +48,10 @@ def download_txt_from_mega(filename: str):
            if file_info.get("a", {}).get("n") == filename:
                m.download((file_id, file_info), dest_path=".", dest_filename=filename)
                print(f"✅ 成功下載：{filename}")
+               with open("text.txt", "r", encoding="utf-8") as f:
+                  content = f.read()
+                  print(f"📄 檔案大小：{len(content)} 字元")
+                  print(f"📄 前100字內容：\n{content[:100]}")             
                return
        raise FileNotFoundError(f"❌ 在 MEGA 找不到檔案：{filename}")
         
@@ -126,6 +130,12 @@ def build_vectorstore():
         download_txt_from_mega("text.txt")
         print("✅ 下載完成：text.txt")
 
+        with open("text.txt", "r", encoding="utf-8") as f:
+            content = f.read()
+            print(f"📄 檔案大小：{len(content)} 字元")
+            print(f"📄 前100字內容：\n{content[:100]}")
+
+        
         # ✅ 這裡加入檢查
         if not os.path.exists("text.txt"):
              raise FileNotFoundError("text.txt 不存在")
