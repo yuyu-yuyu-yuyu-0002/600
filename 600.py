@@ -15,9 +15,6 @@ from langchain.docstore.document import Document
 
 
 
-
-
-
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
@@ -27,8 +24,8 @@ openai.api_base = 'https://free.v36.cm/v1'  # 自訂 API server URL
 
 
 # LINE 設定
-CHANNEL_SECRET = '74630b154d9d0cf1823c5c32db2bcf4f'
-CHANNEL_ACCESS_TOKEN = 'iqYgdqANm0V1UVbC+0jYZqXQNATimJvJRU+esv0RR5TlngqFDmytCT3aVyiyW3mj2BZBoRK6UYoAY8Y2D1L2iVizgzRwU3Q2QblOcdFlf58fK70AZIJ+TtCyb+zvjlwHcEn0TubFwY851pNcJVOEiwdB04t89/1O/w1cDnyilFU='
+CHANNEL_SECRET = 'd61f3ddbed2bca885f904047a010dafe'
+CHANNEL_ACCESS_TOKEN = 'BmwXbOvc7uqDhjRxRC5MmaF9XH0QuMk+sXKL5Dp8yTqqFLCoq7nRNjj4TVt0mZSs2BZBoRK6UYoAY8Y2D1L2iVizgzRwU3Q2QblOcdFlf5/d61RLlvcB66gGoyqRQxvLw1KCwLF+/WNVioFp5IQ9SgdB04t89/1O/w1cDnyilFU='
 
 
 line_bot_api = LineBotApi(CHANNEL_ACCESS_TOKEN)
@@ -77,8 +74,6 @@ def ask_gpt_with_context(query: str, vectorstore: FAISS) -> str:
 app = Flask(__name__)
 
 
-MEGA_EMAIL = os.environ.get("MEGA_EMAIL")
-MEGA_PASSWORD = os.environ.get("MEGA_PASSWORD")
 
 
 
