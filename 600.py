@@ -13,6 +13,7 @@ from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document 
 from mega import Mega
+import requests
 
 
 
@@ -37,32 +38,23 @@ handler = WebhookHandler(CHANNEL_SECRET)
 vectorstore = None
 
 
-def download_txt_from_mega(filename: str):
-    print("🔐 登入 MEGA 並下載 .txt 檔案...")
-    m = Mega()
-    m.login(MEGA_EMAIL, MEGA_PASSWORD)
-    files = m.get_files()
+def download_txt_from_url(url: str, filename: str = "text.txt"):
+    print("🌐 從 URL 下載 text.txt...")
+    response = requests.get(url)
+    
+    if response.status_code != 200:
+        raise Exception(f"❌ 無法下載檔案，HTTP 狀態碼：{response.status_code}")
+    
+    content = response.text.strip()
+    if not content:
+        raise ValueError(f"❌ 下載內容為空")
 
-    for file_id, file_info in files.items():
-        if file_info.get("a", {}).get("n") == filename:
-            print(f"📦 找到檔案 {filename}，準備下載中...")
-            m.download((file_id, file_info), dest_path=".", dest_filename=filename)
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write(content)
 
-            # 確認檔案是否成功寫入
-            if not os.path.exists(filename):
-                raise FileNotFoundError(f"❌ 檔案 {filename} 下載後找不到")
-            if os.stat(filename).st_size == 0:
-                raise ValueError(f"❌ 檔案 {filename} 下載後為空")
-
-            # 顯示預覽內容
-            with open(filename, "r", encoding="utf-8") as f:
-                content = f.read()
-                print(f"✅ 成功下載：{filename}")
-                print(f"📄 檔案大小：{len(content)} 字元")
-                print(f"📄 前100字內容：\n{content[:100]}")
-            return
-
-    raise FileNotFoundError(f"❌ 在 MEGA 找不到檔案：{filename}")
+    print(f"✅ 成功下載：{filename}")
+    print(f"📄 檔案大小：{len(content)} 字元")
+    print(f"📄 前100字內容：\n{content[:100]}")
 
     
 def load_embedding_model():
@@ -132,7 +124,7 @@ def build_vectorstore():
     if vectorstore is None:  # 確保只建一次
         
         print("🔐 登入 MEGA 並下載 .txt 檔案...")
-        download_txt_from_mega("text.txt")
+        download_txt_from_url("https://mega.nz/your-public-link")
         print("✅ 下載完成：text.txt")
 
         with open("text.txt", "r", encoding="utf-8") as f:
