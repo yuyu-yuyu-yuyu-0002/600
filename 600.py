@@ -156,21 +156,6 @@ def build_vectorstore():
         print("✅ 向量資料庫建立完成")
 
 
-@app.route("/", methods=["GET"])
-def index():
-    global vectorstore
-    if vectorstore is None:
-        # 再次嘗試初始化（避免 before_first_request 失敗）
-        try:
-            build_vectorstore()
-        except FileNotFoundError as e:
-            return str(e), 404
-        except ValueError as e:
-            return str(e), 400
-        except Exception as e:
-            return f"❌ 初始化向量庫失敗：{e}", 500
-
-    return "✅ 向量資料庫已建立完成並可使用", 200
 
 
 
