@@ -130,12 +130,7 @@ def build_vectorstore():
             print(f"📄 檔案大小：{len(content)} 字元")
             print(f"📄 前100字內容：\n{content[:100]}")
 
-        
-        # ✅ 這裡加入檢查
-        if not os.path.exists("text.txt"):
-             raise FileNotFoundError("text.txt 不存在")
-        if os.stat("text.txt").st_size == 0:
-            raise ValueError("text.txt 是空的")
+
 
         print("📄 讀取並處理 text.txt")
       
