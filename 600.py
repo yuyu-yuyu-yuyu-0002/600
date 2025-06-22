@@ -40,21 +40,32 @@ vectorstore = None
 
 def download_txt_from_url(url: str, filename: str = "text.txt"):
     print("🌐 從 URL 下載 text.txt...")
-    response = requests.get(url)
     
-    if response.status_code != 200:
-        raise Exception(f"❌ 無法下載檔案，HTTP 狀態碼：{response.status_code}")
-    
-    content = response.text.strip()
-    if not content:
-        raise ValueError(f"❌ 下載內容為空")
+    try:
+        response = requests.get(url, timeout=10)
 
-    with open(filename, "w", encoding="utf-8") as f:
-        f.write(content)
+        if response.status_code != 200:
+            raise Exception(f"❌ 無法下載檔案，HTTP 狀態碼：{response.status_code}")
+        
+        content = response.text.strip()
 
-    print(f"✅ 成功下載：{filename}")
-    print(f"📄 檔案大小：{len(content)} 字元")
-    print(f"📄 前100字內容：\n{content[:100]}")
+        # ⚠️ 防呆：避免誤抓 HTML 頁面
+        if content.lower().startswith("<!doctype html") or "<html" in content.lower():
+            raise ValueError("❌ 下載的內容看起來像 HTML，不是純文字。請確認提供的是原始 .txt 檔案連結（非雲端分享頁）")
+
+        if not content:
+            raise ValueError("❌ 下載內容為空")
+
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write(content)
+
+        print(f"✅ 成功下載：{filename}")
+        print(f"📄 檔案大小：{len(content)} 字元")
+        print(f"📄 前100字內容：\n{content[:100]}")
+
+    except Exception as e:
+        print(f"🚨 發生錯誤：{e}")
+        raise
 
     
 def load_embedding_model():
