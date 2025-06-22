@@ -37,28 +37,23 @@ handler = WebhookHandler(CHANNEL_SECRET)
 vectorstore = None
 
 
-def download_txt_from_mega(filename: str): 
+def download_txt_from_mega(filename: str):
     print("🔐 登入 MEGA 並下載 .txt 檔案...")
-
     m = Mega()
     m.login(MEGA_EMAIL, MEGA_PASSWORD)
     files = m.get_files()
 
-    for file_id, file in files.items():
-        try:
-            attrib = file.get("a")
-            if isinstance(attrib, dict):
-                name = attrib.get("n")
-                if name == filename:
-                    m.download(file, dest_path=".", dest_filename=filename)
-                    print(f"✅ 成功下載：{filename}")
-                    return
-        except Exception as e:
-            print(f"⚠️ 檢查檔案時發生錯誤：{e}")
-
-    raise FileNotFoundError(f"❌ 在 MEGA 找不到檔案：{filename}")
-
-
+    try:
+       for file_id, file_info in files.items():
+           if file_info.get("a", {}).get("n") == filename:
+               m.download((file_id, file_info), dest_path=".", dest_filename=filename)
+               print(f"✅ 成功下載：{filename}")
+               return
+       raise FileNotFoundError(f"❌ 在 MEGA 找不到檔案：{filename}")
+        
+    except Exception as e:
+        print(f"⚠️ 檢查檔案時發生錯誤：{e}")
+        raise    
 
     
 def load_embedding_model():
