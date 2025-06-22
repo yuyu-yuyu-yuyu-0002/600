@@ -22,7 +22,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
 # GPT API Key 設定（openai 0.28.1 寫法）
-openai.api_key = 'sk-kVraVp5JrS0q3DLd1202F329D8C943938cAfDa071f966b29'
+openai.api_key = 'sk-Y6eY0OQ0ffzNHRow3639F5C9E29e4c4a9fEb9d6545DaC944'
 openai.api_base = 'https://free.v36.cm/v1'  # 自訂 API server URL
 
 
