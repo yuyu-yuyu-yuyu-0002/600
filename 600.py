@@ -38,34 +38,21 @@ handler = WebhookHandler(CHANNEL_SECRET)
 vectorstore = None
 
 
-def download_txt_from_url(url: str, filename: str = "text.txt"):
-    print("🌐 從 URL 下載 text.txt...")
-    
-    try:
-        response = requests.get(url, timeout=10)
+def download_txt_from_mega(url: str, filename: str = "text.txt"):
+    print("🔐 登入 MEGA 並下載 .txt 檔案...")
+    mega = Mega()
+    m = mega.login()  # 匿名登入
+    file_path = m.download_url(url, dest_filename=filename)
 
-        if response.status_code != 200:
-            raise Exception(f"❌ 無法下載檔案，HTTP 狀態碼：{response.status_code}")
-        
-        content = response.text.strip()
+    with open(file_path, "r", encoding="utf-8") as f:
+        content = f.read().strip()
 
-        # ⚠️ 防呆：避免誤抓 HTML 頁面
-        if content.lower().startswith("<!doctype html") or "<html" in content.lower():
-            raise ValueError("❌ 下載的內容看起來像 HTML，不是純文字。請確認提供的是原始 .txt 檔案連結（非雲端分享頁）")
+    if not content:
+        raise ValueError(f"❌ 檔案 {filename} 下載後為空")
 
-        if not content:
-            raise ValueError("❌ 下載內容為空")
-
-        with open(filename, "w", encoding="utf-8") as f:
-            f.write(content)
-
-        print(f"✅ 成功下載：{filename}")
-        print(f"📄 檔案大小：{len(content)} 字元")
-        print(f"📄 前100字內容：\n{content[:100]}")
-
-    except Exception as e:
-        print(f"🚨 發生錯誤：{e}")
-        raise
+    print(f"✅ 成功下載：{filename}")
+    print(f"📄 檔案大小：{len(content)} 字元")
+    print(f"📄 前100字內容：\n{content[:100]}")
 
     
 def load_embedding_model():
@@ -135,7 +122,7 @@ def build_vectorstore():
     if vectorstore is None:  # 確保只建一次
         
         print("🔐 登入 MEGA 並下載 .txt 檔案...")
-        download_txt_from_url("https://mega.nz/file/DUdCiA7R#wEzOXnZHiA0mio6owJ4fVqJWFxQHv0waCaPs2roE7ps")
+        download_txt_from_mega("https://mega.nz/file/DUdCiA7R#wEzOXnZHiA0mio6owJ4fVqJWFxQHv0waCaPs2roE7ps")
         print("✅ 下載完成：text.txt")
 
         with open("text.txt", "r", encoding="utf-8") as f:
