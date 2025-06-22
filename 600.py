@@ -124,7 +124,7 @@ def build_vectorstore():
     if vectorstore is None:  # 確保只建一次
         
         print("🔐 登入 MEGA 並下載 .txt 檔案...")
-        download_txt_from_url("https://mega.nz/your-public-link")
+        download_txt_from_url("https://mega.nz/file/DUdCiA7R#wEzOXnZHiA0mio6owJ4fVqJWFxQHv0waCaPs2roE7ps")
         print("✅ 下載完成：text.txt")
 
         with open("text.txt", "r", encoding="utf-8") as f:
