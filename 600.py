@@ -8,10 +8,11 @@ import json
 import random 
 from datetime import datetime
 from langchain.vectorstores import FAISS
-from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document 
-
+from langchain.embeddings.base import Embeddings
+from gensim.models.fasttext import load_facebook_model
+import numpy as np
 
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -32,8 +33,19 @@ handler = WebhookHandler(CHANNEL_SECRET)
 
 vectorstore = None
 
+class FastTextEmbeddings(Embeddings):
+    def __init__(self, model_path: str):
+        self.model = load_facebook_model(model_path)
+
+    def embed_documents(self, texts):
+        return [self.model.get_sentence_vector(text).tolist() for text in texts]
+
+    def embed_query(self, text):
+        return self.model.get_sentence_vector(text).tolist()
+
+
 def load_embedding_model():
-    return HuggingFaceEmbeddings(model_name="sentence-transformers/paraphrase-MiniLM-L3-v2")
+    return FastTextEmbeddings("cc.zh.300.bin")
 
 # === STEP 2: 讀取 TXT 檔 並切割 ===
 def load_static_document():
