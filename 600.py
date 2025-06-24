@@ -13,7 +13,10 @@ from langchain.docstore.document import Document
 from langchain.embeddings.base import Embeddings
 from gensim.models.fasttext import load_facebook_model
 import numpy as np
-
+import scipy
+import gensim
+print("scipy version:", scipy.__version__)
+print("gensim version:", gensim.__version__)
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
