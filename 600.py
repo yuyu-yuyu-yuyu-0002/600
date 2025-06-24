@@ -7,7 +7,10 @@ import os
 import json
 import random 
 from datetime import datetime
-
+import os
+import psutil
+import threading
+import time
 
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
@@ -446,6 +449,13 @@ SaaS模式：提供軟體即服務，讓更多房地產公司輕鬆接⼊。
 ]
 
 
+def log_memory_usage():
+    process = psutil.Process(os.getpid())
+    while True:
+        mem = process.memory_info().rss / 1024 / 1024  # 轉為 MB
+        print(f"[Memory Monitor] RAM 使用中: {mem:.2f} MB")
+        time.sleep(10)  # 每 10 秒印一次
+
 
 # === STEP 5: 問答階段：查詢 FAISS 並餵給 GPT ===
 def ask_question_over_chunks(query):
@@ -480,7 +490,7 @@ def ask_question_over_chunks(query):
 app = Flask(__name__)
 
 
-
+threading.Thread(target=log_memory_usage, daemon=True).start()
 
 
 
