@@ -33,7 +33,7 @@ vectorstore = None
 
 
 
-knowledge_chunks = load_pdf_to_chunks("00.pdf")
+
 
 def log_memory_usage():
     process = psutil.Process(os.getpid())
@@ -143,7 +143,7 @@ app = Flask(__name__)
 
 threading.Thread(target=log_memory_usage, daemon=True).start()
 
-
+knowledge_chunks = load_pdf_to_chunks("00.pdf")
 
 @app.route("/callback", methods=['POST'])
 def callback():
