@@ -458,12 +458,50 @@ def log_memory_usage():
 
 
 # === STEP 5: 問答階段：查詢 FAISS 並餵給 GPT ===
-def ask_question_over_chunks(query):
-    system_prompt = "你是一位資料助理，請根據『內容』回答問題。若找不到資料，請只回答：不知道。"
+def classify_intent_with_gpt(query: str) -> dict:
+    """
+    使用 GPT 進行意圖分類，判斷是否為不動產仲介相關問題，
+    並回傳分類結果與信心分數。
+    """
+    prompt = f"""
+    請判斷下列問題是否屬於「不動產、房地產、仲介」相關領域：
+    問題："{query}"
 
+    請以 JSON 格式回覆，包含：
+    - intent: "real_estate" 或 "other"
+    - confidence: 0.0 到 1.0 的數字，代表信心分數
+
+    範例輸出：
+    {{ "intent": "real_estate", "confidence": 0.95 }}
+    """
+
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0,
+        max_tokens=60,
+    )
+    content = response["choices"][0]["message"]["content"].strip()
+    
+    try:
+        intent_info = json.loads(content)
+        return intent_info
+    except Exception as e:
+        print("意圖分類解析失敗，內容：", content)
+        # 預設回傳其他領域
+        return {"intent": "other", "confidence": 0.0}
+
+
+def ask_question_over_chunks(query: str, knowledge_chunks: list) -> str:
+    """
+    從資料庫段落中逐段查詢答案，
+    找到非「不知道」的答案就回傳，
+    否則回傳「不知道」。
+    """
+    system_prompt = "你是一位資料助理，請根據『內容』回答問題。若資料中找不到答案，請只回答：不知道。"
+    
     for i, chunk in enumerate(knowledge_chunks):
         user_prompt = f"內容：{chunk}\n\n問題：{query}"
-
         try:
             response = openai.ChatCompletion.create(
                 model="gpt-3.5-turbo",
@@ -476,11 +514,57 @@ def ask_question_over_chunks(query):
             )
             answer = response["choices"][0]["message"]["content"].strip()
             if "不知道" not in answer:
-                return f"[第{i+1}段] {answer}"
+                return f"[來自第{i+1}段]：{answer}"
         except Exception as e:
-            print(f"❌ 第 {i+1} 段查詢失敗：{e}")
+            print(f"第 {i+1} 段查詢失敗：{e}")
 
     return "不知道"
+
+
+def handle_unknown_question(query: str, intent: str) -> str:
+    """
+    未在知識庫找到答案時，根據意圖回覆不同內容。
+    """
+    if intent == "real_estate":
+        return (
+            "您好，感謝您的提問！"
+            "為了幫助您更進一步，您可以嘗試：\n"
+            "1. 提供更多背景或細節，讓我們更精準理解您的需求。\n"
+            "2. 我們提供LINE QR CODE，歡迎您尋求專業領域的房仲來諮詢回答。"
+        )
+    else:
+        # 非不動產相關問題，使用 GPT 一般問答
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "你是一位知識豐富且樂於助人的助理。"},
+                {"role": "user", "content": query}
+            ],
+            temperature=0.5,
+            max_tokens=300,
+        )
+        return response["choices"][0]["message"]["content"].strip()
+
+
+def chatbot_response(query: str, knowledge_chunks: list) -> str:
+    """
+    主聊天回覆流程：
+    1. 先用 GPT 做意圖分類
+    2. 用知識庫嘗試找答案
+    3. 找不到答案時根據意圖做不同回答
+    """
+    intent_info = classify_intent_with_gpt(query)
+    intent = intent_info.get("intent", "other")
+    confidence = intent_info.get("confidence", 0.0)
+    print(f"判斷意圖: {intent}，信心分數: {confidence}")
+
+    answer = ask_question_over_chunks(query, knowledge_chunks)
+
+    if answer == "不知道":
+        answer = handle_unknown_question(query, intent)
+
+    return answer
+
 
 
 
@@ -523,7 +607,7 @@ def handle_message(event):
     
     try:          
         # 所有訊息都用向量資料庫查找內容 + GPT 回答
-        reply = ask_question_over_chunks(user_input)
+        reply = chatbot_response(user_input, knowledge_chunks)
 
         line_bot_api.reply_message(
             event.reply_token,
