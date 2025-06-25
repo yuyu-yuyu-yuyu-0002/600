@@ -174,6 +174,41 @@ def handle_message(event):
     
     try:          
         # 所有訊息都用向量資料庫查找內容 + GPT 回答
+
+        if user_input.strip() == "看網頁":
+            bubble = {
+                "type": "bubble",
+                "body": {
+                    "type": "box",
+                    "layout": "vertical",
+                    "contents": [
+                        {
+                            "type": "text",
+                            "text": "點我打開網頁",
+                            "weight": "bold",
+                            "size": "lg",
+                            "margin": "md"
+                        },
+                        {
+                            "type": "button",
+                            "style": "primary",
+                            "action": {
+                                "type": "uri",
+                                "label": "前往網頁",
+                                "uri": "https://你的domain/web"  # 例：https://abc.onrender.com/web
+                            },
+                            "margin": "md"
+                        }
+                    ]
+                }
+            }
+
+            line_bot_api.reply_message(
+                event.reply_token,
+                FlexSendMessage(alt_text="點我看網頁", contents=bubble)
+            )
+            return  # 不繼續往下執行
+    
         reply = ask_question_over_chunks(user_input, knowledge_chunks)
         
         if reply.strip() == "不知道":
