@@ -2,6 +2,7 @@ from flask import Flask, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
+from linebot.models import RichMenu, RichMenuArea, RichMenuBounds, URIAction
 from linebot.models import FlexSendMessage
 import openai
 import os
@@ -100,55 +101,40 @@ def handle_unknown_question(user_input):
         )
         return fallback["choices"][0]["message"]["content"].strip()
 
-def setup_rich_menu_for_user(user_id):
-    """設定 Rich Menu 給特定用戶"""
-    try:
-        # Rich Menu 設定
 
+
+def setup_rich_menu_for_user(user_id):
+    try:
+        # 先解除舊的 Rich Menu
         try:
             line_bot_api.unlink_rich_menu_from_user(user_id)
             print(f"已解除用戶 {user_id} 的 Rich Menu")
-        except:
-            pass  # 沒有綁定也沒關係
+        except Exception as e:
+            print(f"解除 Rich Menu 失敗（可能本來就沒有）: {e}")
 
-
-        
-        rich_menu_to_create = {
-            "size": {
-                "width": 2500,
-                "height": 1686
-            },
-            "selected": True,
-            "name": "Knowledge Base Menu",
-            "chatBarText": "知識庫選單",
-            "areas": [
-                {
-                    "bounds": {
-                        "x": 0,
-                        "y": 0,
-                        "width": 2500,
-                        "height": 1686
-                    },
-                    "action": {
-                        "type": "uri",
-                        "uri": f"https://line-knowledge.vercel.app/?user_id={user_id}"
-                    }
-                }
+        # 正確建立 Rich Menu（不能用 dict）
+        rich_menu_to_create = RichMenu(
+            size={"width": 2500, "height": 1686},
+            selected=True,
+            name="Knowledge Base Menu",
+            chat_bar_text="知識庫選單",
+            areas=[
+                RichMenuArea(
+                    bounds=RichMenuBounds(x=0, y=0, width=2500, height=1686),
+                    action=URIAction(uri=f"https://line-knowledge.vercel.app/?user_id={user_id}")
+                )
             ]
-        }
-        
-        # 創建 Rich Menu
+        )
+
         rich_menu_id = line_bot_api.create_rich_menu(rich_menu_to_create)
-        
-        # 設定 Rich Menu 圖片 (需要準備一張 2500x1686 的圖片)
+
         with open('1.png', 'rb') as f:
-             line_bot_api.set_rich_menu_image(rich_menu_id, 'image/png', f)
-        
-        # 將 Rich Menu 綁定到用戶
+            line_bot_api.set_rich_menu_image(rich_menu_id, 'image/png', f)
+
         line_bot_api.link_rich_menu_to_user(user_id, rich_menu_id)
-        
+
         print(f"Rich Menu 設定成功，用戶 ID: {user_id}")
-        
+
     except Exception as e:
         print(f"設定 Rich Menu 失敗: {e}")
 
