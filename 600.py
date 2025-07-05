@@ -132,8 +132,8 @@ def setup_rich_menu_for_user(user_id):
         rich_menu_id = line_bot_api.create_rich_menu(rich_menu_to_create)
         
         # 設定 Rich Menu 圖片 (需要準備一張 2500x1686 的圖片)
-        # with open('rich_menu_image.png', 'rb') as f:
-        #     line_bot_api.set_rich_menu_image(rich_menu_id, 'image/png', f)
+        with open('1.png', 'rb') as f:
+             line_bot_api.set_rich_menu_image(rich_menu_id, 'image/png', f)
         
         # 將 Rich Menu 綁定到用戶
         line_bot_api.link_rich_menu_to_user(user_id, rich_menu_id)
@@ -249,7 +249,7 @@ def handle_message(event):
                             "action": {
                                 "type": "uri",
                                 "label": "前往網頁",
-                                "uri": "https://你的domain/web"  # 例：https://abc.onrender.com/web
+                                "uri": "https://line-knowledge.vercel.app/" 
                             },
                             "margin": "md"
                         }
