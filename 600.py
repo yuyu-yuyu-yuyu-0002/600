@@ -104,6 +104,15 @@ def setup_rich_menu_for_user(user_id):
     """設定 Rich Menu 給特定用戶"""
     try:
         # Rich Menu 設定
+
+        try:
+            line_bot_api.unlink_rich_menu_from_user(user_id)
+            print(f"已解除用戶 {user_id} 的 Rich Menu")
+        except:
+            pass  # 沒有綁定也沒關係
+
+
+        
         rich_menu_to_create = {
             "size": {
                 "width": 2500,
