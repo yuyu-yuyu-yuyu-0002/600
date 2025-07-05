@@ -100,6 +100,48 @@ def handle_unknown_question(user_input):
         )
         return fallback["choices"][0]["message"]["content"].strip()
 
+def setup_rich_menu_for_user(user_id):
+    """設定 Rich Menu 給特定用戶"""
+    try:
+        # Rich Menu 設定
+        rich_menu_to_create = {
+            "size": {
+                "width": 2500,
+                "height": 1686
+            },
+            "selected": True,
+            "name": "Knowledge Base Menu",
+            "chatBarText": "知識庫選單",
+            "areas": [
+                {
+                    "bounds": {
+                        "x": 0,
+                        "y": 0,
+                        "width": 2500,
+                        "height": 1686
+                    },
+                    "action": {
+                        "type": "uri",
+                        "uri": f"https://line-knowledge.vercel.app/?user_id={user_id}"
+                    }
+                }
+            ]
+        }
+        
+        # 創建 Rich Menu
+        rich_menu_id = line_bot_api.create_rich_menu(rich_menu_to_create)
+        
+        # 設定 Rich Menu 圖片 (需要準備一張 2500x1686 的圖片)
+        # with open('rich_menu_image.png', 'rb') as f:
+        #     line_bot_api.set_rich_menu_image(rich_menu_id, 'image/png', f)
+        
+        # 將 Rich Menu 綁定到用戶
+        line_bot_api.link_rich_menu_to_user(user_id, rich_menu_id)
+        
+        print(f"Rich Menu 設定成功，用戶 ID: {user_id}")
+        
+    except Exception as e:
+        print(f"設定 Rich Menu 失敗: {e}")
 
 
 def ask_question_over_chunks(query: str, knowledge_chunks: list) -> str:
@@ -171,11 +213,22 @@ def handle_message(event):
     user_input = event.message.text
     user_id = event.source.user_id
 
+    if user_input.lower() == "設定選單" or user_input.lower() == "menu":
+        setup_rich_menu_for_user(user_id)
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="Rich Menu 已設定完成！請查看下方選單。")
+        )
+        return
 
-    
+
+
+
     try:          
         # 所有訊息都用向量資料庫查找內容 + GPT 回答
 
+        line_bot_api.get_rich_menu_id_of_user(user_id)
+        
         if user_input.strip() == "看網頁":
             bubble = {
                 "type": "bubble",
@@ -225,6 +278,7 @@ def handle_message(event):
         print(f"[AI 回答] {reply}")
 
     except Exception as e:
+        setup_rich_menu_for_user(user_id)
         print("⚠️ 錯誤發生：", e)
         line_bot_api.reply_message(
             event.reply_token,
